@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<h2>회원가입</h2>
+<form id="signupForm">
+    <label for="name">이름:</label>
+    <input type="text" id="name" name="name" required><br><br>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <label for="email">이메일:</label>
+        <input type="text" id="email" name="email" required placeholder="a123@naver.com">
+        <p id="result"></p>
+    </div>
+    <br>
+
+    <label for="password">비밀번호:</label>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <label for="checkPassword">비밀번호 확인:</label>
+        <input type="password" id="checkPassword" name="checkPassword" required>
+        <p id="passwordResult"></p>
+    </div>
+    <br>
+
+    <button type="submit" id="submitBtn" disabled>가입하기</button>
+</form>
+
+
+
+<script>
+    $(document).ready(function () {
+        let debounceTimer;
+        let lastCheckedEmail = "";
+
+        $("#email").on("input", function () {
+            const email = $(this).val();
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                if (email === lastCheckedEmail) {
+                    $("#submitBtn").prop("disabled", true);
+                    return;
+                }
+
+                $.ajax({
+                    url: "/member/api/checkemail",
+                    type: "GET",
+                    data: { email: email },
+                    success: function (response) {
+                        $("#result").text(response).css("color", "green");
+                        $("#submitBtn").prop("disabled", false);
+                        lastCheckedEmail = email;
+                    },
+                    error: function (xhr) {
+                        $("#result").text(xhr.responseText).css("color", "red");
+                        $("#submitBtn").prop("disabled", true);
+                    }
+                });
+            }, 500);
+        });
+
+        $("#password, #checkPassword").on("input", function () {
+            const password = $("#password").val();
+            const checkPassword = $("#checkPassword").val();
+
+            if (password === checkPassword && password.length > 0) {
+                $("#passwordResult").text("비밀번호가 일치합니다.").css("color", "green");
+                passwordMatch = true;
+            } else {
+                $("#passwordResult").text("비밀번호가 일치하지 않습니다.").css("color", "red");
+                passwordMatch = false;
+            }
+
+            updateSubmitState();
+        });
+
+        function updateSubmitState() {
+            if (emailValid && passwordMatch) {
+                $("#submitBtn").prop("disabled", false);
+            } else {
+                $("#submitBtn").prop("disabled", true);
+            }
+        }
+
+        $("#signupForm").submit(function (e) {
+            e.preventDefault();
+
+            const email = $("#email").val();
+            const password = $("#password").val();
+            const name = $("#name").val();
+
+            $.ajax({
+                url: "/member/api/signup",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({name: name,  email: email, password: password}),
+                success: function (response) {
+                    alert(response);
+                    window.location.href = "/member/login";
+                },
+                error: function (xhr) {
+                    alert(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

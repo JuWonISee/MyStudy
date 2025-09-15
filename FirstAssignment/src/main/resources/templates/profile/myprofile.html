@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>내 프로필</title>
+
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+
+    <style>
+        .content { margin: 40px; }
+        h2 { margin-bottom: 20px; }
+        .btn-group { margin-bottom: 30px; }
+        button { margin-right: 10px; padding: 8px 16px; font-size: 14px; cursor: pointer; }
+        .section { margin-bottom: 40px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #ccc; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .delete-btn { background-color: #ff4d4d; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+        .delete-account { background-color: red; color: white; padding: 10px 20px; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; }
+        .show-more-btn { background-color: #444; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<div th:replace="fragments/navbar :: navbar(${memberName})"></div>
+
+<div class="content">
+    <h2 th:text="'Welcome ' + ${memberName}">Welcome User</h2>
+
+    <div class="btn-group">
+        <button onclick="location.href='/editprofile'">Edit Profile</button>
+        <button onclick="location.href='/addexperience'">Add Experience</button>
+        <button onclick="location.href='/addeducation'">Add Education</button>
+    </div>
+
+    <div class="section">
+        <h3>Experience Credentials</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Title</th>
+                    <th>Years</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="experienceBody"></tbody>
+        </table>
+        <button id="showMoreExpBtn" class="show-more-btn" style="display: none;">더보기</button>
+    </div>
+
+    <div class="section">
+        <h3>Education Credentials</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>School</th>
+                    <th>Degree</th>
+                    <th>Years</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="educationBody"></tbody>
+        </table>
+        <button id="showMoreEduBtn" class="show-more-btn" style="display: none;">더보기</button>
+    </div>
+
+    <button class="delete-account">Delete My Account</button>
+</div>
+
+<script th:inline="javascript">
+    const experienceList = [[${experienceList}]];
+    const educationList = [[${educationList}]];
+    const memberId = [[${memberId}]];
+</script>
+
+<script>
+    const maxVisible = 2;
+    let showingAllExp = false;
+    let showingAllEdu = false;
+
+    function renderList(list, tbodyId, showAll, showMoreBtnId, type) {
+        const $tbody = $('#' + tbodyId);
+        const $showMoreBtn = $('#' + showMoreBtnId);
+        $tbody.empty();
+
+        const itemsToShow = showAll ? list : list.slice(0, maxVisible);
+
+        if (itemsToShow.length === 0) {
+            $tbody.append(`<tr><td colspan="4">${type} 정보가 없습니다.</td></tr>`);
+            $showMoreBtn.hide();
+            return;
+        }
+
+        itemsToShow.forEach(item => {
+            const startDate = item.startDate || "";
+            const endDate = item.endDate || "Now";
+            const id = item.id;
+            const row = $(`
+            <tr>
+              <td>${item.company || item.school}</td>
+              <td>${item.title || item.degree}</td>
+              <td>${startDate} - ${endDate}</td>
+              <td><button class="delete-btn">Delete</button></td>
+            </tr>
+            `);
+
+            row.find('.delete-btn').on('click', function () {
+                if (confirm("정말 삭제하시겠습니까?")) {
+                    const deleteUrl = type === "경력"
+                        ? `/myprofile/exp/delete`
+                        : `/myprofile/edu/delete`;
+
+                    $.ajax({
+                        url: deleteUrl,
+                        type: 'DELETE',
+                        contentType: 'application/json',
+                        data: JSON.stringify({id: id}),
+                        success: function () {
+                            alert("삭제되었습니다.");
+                            location.reload();
+                        },
+                        error: function () {
+                            alert("삭제 실패");
+                        }
+                    });
+                }
+            });
+
+            $tbody.append(row);
+        });
+
+        if (list.length > maxVisible) {
+            $showMoreBtn.show().text(showAll ? "접기" : "더보기");
+        } else {
+            $showMoreBtn.hide();
+        }
+    }
+
+    $(document).ready(function () {
+        renderList(experienceList, "experienceBody", showingAllExp, "showMoreExpBtn", "경력");
+        renderList(educationList, "educationBody", showingAllEdu, "showMoreEduBtn", "학력");
+
+        $('#showMoreExpBtn').on('click', function () {
+            showingAllExp = !showingAllExp;
+            renderList(experienceList, "experienceBody", showingAllExp, "showMoreExpBtn", "경력");
+        });
+
+        $('#showMoreEduBtn').on('click', function () {
+            showingAllEdu = !showingAllEdu;
+            renderList(educationList, "educationBody", showingAllEdu, "showMoreEduBtn", "학력");
+        });
+
+        $('.delete-account').on('click', function () {
+            if (confirm("정말 삭제하시겠습니까?")) {
+                $.ajax({
+                    url: '/member/api/delete',
+                    type: 'DELETE',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ id: memberId }),
+                    success: function () {
+                        alert("회원 탈퇴가 완료되었습니다.");
+                        location.href = "/";
+                    },
+                    error: function () {
+                        alert("회원 탈퇴 실패");
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="navbar(memberName)">
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="/memberList">MemberList</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="nav-right">
+            <button class="member-btn" th:text="${memberName}" onclick="location.href='/myprofile'">사용자</button>
+        </div>
+    </nav>
+</div>
+</body>
+</html>

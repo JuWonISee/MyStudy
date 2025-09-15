@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Your Profile</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f9f9f9;
+        }
+
+        form {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 700px;
+            margin: auto;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        small {
+            display: block;
+            margin-top: 4px;
+            color: #666;
+        }
+
+        .btn-group {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-confirm {
+            background-color: teal;
+            color: white;
+        }
+
+        .btn-back {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<form id="editProfileForm" th:action="@{/edit-profile}" method="post">
+    <h2>Edit Your Profile</h2>
+
+    <select id="status" name="status">
+        <option value="">-- Select Professional Status --</option>
+        <option value="Developer">Developer</option>
+        <option value="Junior Developer">Junior Developer</option>
+        <option value="Senior Developer">Senior Developer</option>
+        <option value="Manager">Manager</option>
+        <option value="Student">Student</option>
+        <option value="Instructor">Instructor</option>
+        <option value="Other">Other</option>
+    </select>
+    <small>Give us an idea of where you are in your career</small><br>
+
+    <input type="text" id="company" name="company" placeholder="Company">
+    <small> Could be your own company or one you work for</small><br>
+
+    <input type="text" id="domain" name="domain" placeholder="Website">
+    <small> Could be your own or a company website</small><br>
+
+    <input type="text" id="city" name="city" placeholder="서울특별시 송파구">
+    <small for="city">City & state suggested (eg. 서울특별시 송파구)</small><br>
+
+    <input type="text" id="skills" name="skills" placeholder="springframework,react,express,MySql">
+    <small>Please use comma separated values (eg. HTML,CSS,JavaScript)</small><br>
+
+    <input type="text" id="github" name="github" placeholder="Github Username">
+    <small>If you want your latest repos and a Github link, include your username</small><br>
+
+    <input type="text" id="yourself" name="yourself" placeholder="Text introduce yourself">
+    <small>Tell us a little about yourself</small><br>
+
+    <label>Add Social Network Links</label>
+    <input type="text" id="twitter" name="twitter" placeholder="Twitter URL">
+    <input type="text" id="facebook" name="facebook" placeholder="Facebook URL">
+    <input type="text" id="youtube" name="youtube" placeholder="YouTube URL">
+    <input type="text" id="linkedin" name="linkedin" placeholder="LinkedIn URL">
+    <input type="text" id="instagram" name="instagram" placeholder="Instagram URL">
+
+    <div class="btn-group">
+        <button type="submit" class="btn-confirm">제출</button>
+        <button type="button" class="btn-back" onclick="history.back()">Go Back</button>
+    </div>
+</form>
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: '/member/api/getinfo',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                $('#status').val(data.status);
+                $('#company').val(data.company);
+                $('#domain').val(data.domain);
+                $('#city').val(data.city);
+                $('#skills').val(data.skills);
+                $('#github').val(data.github);
+                $('#yourself').val(data.yourself);
+                $('#twitter').val(data.twitter);
+                $('#facebook').val(data.facebook);
+                $('#youtube').val(data.youtube);
+                $('#linkedin').val(data.linkedin);
+                $('#instagram').val(data.instagram);
+
+            },
+            error: function () {
+                alert("회원 정보를 불러오지 못했습니다.");
+            }
+        });
+
+        $('.btn-confirm').on('click', function (e) {
+            e.preventDefault(); // 기본 폼 제출 막기
+
+            const payload = {
+                status: $('#status').val(),
+                company: $('#company').val(),
+                domain: $('#domain').val(),
+                city: $('#city').val(),
+                skills: $('#skills').val(),
+                github: $('#github').val(),
+                yourself: $('#yourself').val(),
+                twitter: $('#twitter').val(),
+                facebook: $('#facebook').val(),
+                youtube: $('#youtube').val(),
+                linkedin: $('#linkedin').val(),
+                instagram: $('#instagram').val()
+            };
+
+            $.ajax({
+                url: '/member/api/update',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function () {
+                    alert("프로필이 성공적으로 업데이트되었습니다.");
+                    location.href = "/editprofile";
+                },
+                error: function () {
+                    alert("프로필 업데이트에 실패했습니다.");
+                }
+            });
+        });
+
+        $('.btn-back').on('click', function () {
+            location.href = "/myprofile";
+        });
+
+    });
+</script>
+
+</body>
+</html>
